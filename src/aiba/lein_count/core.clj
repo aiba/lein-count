@@ -1,5 +1,6 @@
 (ns aiba.lein-count.core
   (:require [clojure.java.io :as io]
+            [clojure.pprint :as pprint]
             [clojure.string :as string]
             [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as rt]
@@ -60,8 +61,8 @@
 (defn print-report [ms & [opts]]
   (let [info (get opts :info println)
         warn (get opts :warn (partial println "WARN:"))]
-    (doseq [m ms]
-      (info (pr-str m)))))
+    (info (count ms) "files.")
+    (info (with-out-str (pprint/print-table [:file :ext :lines :nodes] ms)))))
 
 (comment
   (print-report
