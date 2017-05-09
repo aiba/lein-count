@@ -85,7 +85,15 @@
           (keys (first rows))))
 
 (defn table-by-ext [fms]
-  (let [by-ext (tally-by-ext fms)
+  (let [by-ext (->> fms
+                    (group-by :ext)
+                    (map-vals (fn [ms]
+                                (as-> fms $
+                                  (map #(dissoc % :ext :file) $)
+                                  (apply merge-with + $)
+                                  (assoc $ :files (count fms)))))
+                    (seq)
+                    (map #(assoc (val %) :ext (key %))))
         totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
                       :ext "SUM:")]
     (doric/table [{:name :ext   :align :right}
