@@ -35,6 +35,21 @@ FIXME: and add an example usage that actually makes sense:
 
 
 
+## Counting artifacts
+
+To run it on an artifact, you can pass an argument.  For example:
+
+```
+$ lein succinct :artifact [mount "0.1.11"]
+
+<<insert output here>>
+
+$ lein cloc :artifact [com.stuartsierra/component "0.3.2"]
+
+<<insert output here>>
+```
+
+
 
 
 
