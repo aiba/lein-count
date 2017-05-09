@@ -8,6 +8,8 @@
   (:import clojure.lang.ExceptionInfo
            java.io.File))
 
+;; Utils ———————————————————————————————————————————————————————————————————————————
+
 (defn map-vals [f m]
   (reduce-kv (fn [r k v] (assoc r k (f v))) {} m))
 
@@ -18,6 +20,8 @@
                (str x "/")))]
     (-> (.getAbsolutePath f)
         (string/replace (re-pattern (str "^" wd)) ""))))
+
+;; Analyzing code ——————————————————————————————————————————————————————————————————
 
 (defn count-form? [x]
   (not (and (list? x)
@@ -68,6 +72,8 @@
                       (some #(.endsWith (.getName f) %) ["clj" "cljs" "cljc"]))))
        (map file-metrics)))
 
+;; Generating ASCII report —————————————————————————————————————————————————————————
+
 (defn tally-by-ext [ms]
   (->> ms
        (group-by :ext)
@@ -103,6 +109,8 @@
                            (concat (sort-by #(get % :nodes -1) > by-ext)
                                    [{}]
                                    [totals])))))))
+
+;; Testing —————————————————————————————————————————————————————————————————————————
 
 (comment
   (print-report
