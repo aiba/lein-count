@@ -74,13 +74,28 @@
 
 ;; Generating ASCII report —————————————————————————————————————————————————————————
 
+(def columns [{:name :ext   :align :right}
+              {:name :file  :align :left}
+              {:name :files :align :right}
+              {:name :lines :align :right :title "Lines of Code"}
+              {:name :nodes :align :right}])
+
+(defn ascii-table [rows]
+  (let [ks (-> rows first keys set)]
+    (doric/table (filter #(contains? ks (:name %)) columns)
+                 rows)))
+
 (defn dash-row [rows]
   (reduce (fn [ret k]
-            (assoc ret k (apply str
-                                (repeat (->> rows
-                                             (map #(count (str (get % k))))
-                                             (apply max 4 (count (name k))))
-                                        "_"))))
+            (let [col (->> columns (filter #(= (:name %) k)) first)]
+              (assoc ret k (apply str
+                                  (repeat (->> rows
+                                               (map #(count (str (get % k))))
+                                               (apply max
+                                                      4
+                                                      (count (name (:name col)))
+                                                      (count (get col :title ""))))
+                                          "_")))))
           {}
           (keys (first rows))))
 
@@ -96,21 +111,14 @@
                     (map #(assoc (val %) :ext (key %))))
         totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
                       :ext "SUM:")]
-    (doric/table [{:name :ext   :align :right}
-                  {:name :files :align :right}
-                  {:name :lines :align :right}
-                  {:name :nodes :align :right}]
-                 (concat (sort-by #(get % :nodes -1) > by-ext)
+    (ascii-table (concat (sort-by #(get % :nodes -1) > by-ext)
                          [(dash-row by-ext)]
                          [totals]))))
 
 (defn table-by-file [fms]
   (let [totals (assoc (->> fms (map #(dissoc % :ext :file)) (apply merge-with +))
                       :file "SUM:")]
-    (doric/table [{:name :file  :align :left}
-                  {:name :lines :align :right}
-                  {:name :nodes :align :right}]
-                 (concat (sort-by #(get % :nodes -1) > fms)
+    (ascii-table (concat (sort-by #(get % :nodes -1) > fms)
                          [(dash-row fms)]
                          [totals]))))
 
