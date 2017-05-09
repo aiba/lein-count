@@ -8,6 +8,11 @@
   (:import clojure.lang.ExceptionInfo
            java.io.File))
 
+(defn relative-path-str [^File f]
+  (-> (.getAbsolutePath f)
+      (string/replace (re-pattern (str "^" (System/getProperty "user.dir"))) "")
+      (string/replace #"^[\/\.]+" "")))
+
 (defn count-form? [x]
   (not (and (list? x)
             (= (first x) 'comment))))
@@ -34,20 +39,19 @@
             (recur (conj ret form))))))))
 
 (defn file-metrics [^File f]
-  (try
-    (let [m (->> f (read-all-forms) (mapcat all-meta))]
-      {:file (.getName f)
-       :ext (-> (.getName f) (string/split #"\.") last)
-       :nodes (count m)
-       :lines (->> m
-                   (map :meta)
-                   (mapcat (juxt :line :end-line))
-                   (remove nil?)
-                   (distinct)
-                   (count))})
-    (catch ExceptionInfo e
-      {:file (.getName f)
-       :error (ex-data e)})))
+  (-> (try
+        (let [m (->> f (read-all-forms) (mapcat all-meta))]
+          {:ext (-> (.getName f) (string/split #"\.") last)
+           :nodes (count m)
+           :lines (->> m
+                       (map :meta)
+                       (mapcat (juxt :line :end-line))
+                       (remove nil?)
+                       (distinct)
+                       (count))})
+        (catch ExceptionInfo e
+          {:error (ex-data e)}))
+      (assoc :file (relative-path-str f))))
 
 (defn metrics [dirs]
   (->> dirs
@@ -62,9 +66,11 @@
   (let [info (get opts :info println)
         warn (get opts :warn (partial println "WARN:"))]
     (info (count ms) "files.")
-    (info (with-out-str (pprint/print-table [:file :ext :lines :nodes] ms)))))
+    (info (with-out-str
+            (pprint/print-table [:file :ext :lines :nodes]
+                                (sort-by #(get % :nodes -1) > ms))))))
 
 (comment
   (print-report
-   (metrics ["./src" "./test-data"]))
+   (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"]))
   )
