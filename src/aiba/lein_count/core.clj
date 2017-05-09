@@ -1,8 +1,11 @@
 (ns aiba.lein-count.core
-  (:require [clojure.tools.reader :as reader]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as string]
+            [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as rt]
             [clojure.walk :as walk])
-  (:import clojure.lang.ExceptionInfo))
+  (:import clojure.lang.ExceptionInfo
+           java.io.File))
 
 (defn count-form? [x]
   (not (and (list? x)
@@ -29,10 +32,12 @@
             ret
             (recur (conj ret form))))))))
 
-(defn metrics [f]
+(defn file-metrics [^File f]
   (try
     (let [m (->> f (read-all-forms) (mapcat all-meta))]
-      {:nodes (count m)
+      {:file (.getName f)
+       :ext (-> (.getName f) (string/split #"\.") last)
+       :nodes (count m)
        :lines (->> m
                    (map :meta)
                    (mapcat (juxt :line :end-line))
@@ -40,10 +45,25 @@
                    (distinct)
                    (count))})
     (catch ExceptionInfo e
-      {:error (ex-data e)})))
+      {:file (.getName f)
+       :error (ex-data e)})))
+
+(defn metrics [dirs]
+  (->> dirs
+       (map io/file)
+       (mapcat file-seq)
+       (filter (fn [f]
+                 (and (not (.isDirectory f))
+                      (some #(.endsWith (.getName f) %) ["clj" "cljs" "cljc"]))))
+       (map file-metrics)))
+
+(defn print-report [ms & [opts]]
+  (let [info (get opts :info println)
+        warn (get opts :warn (partial println "WARN:"))]
+    (doseq [m ms]
+      (info (pr-str m)))))
 
 (comment
-  (metrics "./src/aiba/lein_count/core.clj")
-  (metrics "./test-data/aliased_ns_kw.clj")
-  (metrics "./test-data/fn_doc.clj")
+  (print-report
+   (metrics ["./src" "./test-data"]))
   )
