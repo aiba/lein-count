@@ -63,8 +63,8 @@
           {:error (dissoc (ex-data e) :file)}))
       (assoc :file (relative-path-str f))))
 
-(defn metrics [dirs]
-  (->> dirs
+(defn metrics [files-or-dirs]
+  (->> files-or-dirs
        (map io/file)
        (mapcat file-seq)
        (filter (fn [f]
@@ -74,16 +74,37 @@
 
 ;; Generating ASCII report —————————————————————————————————————————————————————————
 
-(defn tally-by-ext [ms]
-  (->> ms
-       (group-by :ext)
-       (map-vals (fn [ms]
-                   (as-> ms $
-                     (map #(dissoc % :ext :file) $)
-                     (apply merge-with + $)
-                     (assoc $ :files (count ms)))))
-       (seq)
-       (map #(assoc (val %) :ext (key %)))))
+(defn dash-row [rows]
+  (reduce (fn [ret k]
+            (assoc ret k (apply str
+                                (repeat (->> rows
+                                             (map #(count (str (get % k))))
+                                             (apply max 4 (count (name k))))
+                                        "_"))))
+          {}
+          (keys (first rows))))
+
+(defn table-by-ext [fms]
+  (let [by-ext (tally-by-ext fms)
+        totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
+                      :ext "SUM:")]
+    (doric/table [{:name :ext   :align :right}
+                  {:name :files :align :right}
+                  {:name :lines :align :right}
+                  {:name :nodes :align :right}]
+                 (concat (sort-by #(get % :nodes -1) > by-ext)
+                         [(dash-row by-ext)]
+                         [totals]))))
+
+(defn table-by-file [fms]
+  (let [totals (assoc (->> fms (map #(dissoc % :ext :file)) (apply merge-with +))
+                      :file "SUM:")]
+    (doric/table [{:name :file  :align :left}
+                  {:name :lines :align :right}
+                  {:name :nodes :align :right}]
+                 (concat (sort-by #(get % :nodes -1) > fms)
+                         [(dash-row fms)]
+                         [totals]))))
 
 (defn print-report [ms & [opts]]
   (let [info (get opts :info println)
@@ -98,21 +119,19 @@
       (doseq [e errs]
         (warn (pr-str e))))
     (when (seq fms)
-      (let [by-ext (tally-by-ext fms)
-            totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
-                          :ext "SUM:")]
-        (info "")
-        (info (doric/table [{:name :ext   :align :right}
-                            {:name :files :align :right}
-                            {:name :lines :align :right}
-                            {:name :nodes :align :right}]
-                           (concat (sort-by #(get % :nodes -1) > by-ext)
-                                   [{}]
-                                   [totals])))))))
+      (info "")
+      (info (if (:by-file opts)
+              (table-by-file fms)
+              (table-by-ext fms))))))
 
 ;; Testing —————————————————————————————————————————————————————————————————————————
 
 (comment
-  (print-report
-   (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"]))
+
+  (print-report (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"])
+                {})
+
+  (print-report (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"])
+                {:by-file true})
+
   )
