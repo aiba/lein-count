@@ -1,7 +1,7 @@
 (ns aiba.lein-count.core
-  (:require [clojure.tools.reader :as ctr]
-            [clojure.tools.reader.reader-types :refer [indexing-push-back-reader]]
-            [clojure.walk :refer [prewalk]]))
+  (:require [clojure.tools.reader :as reader]
+            [clojure.tools.reader.reader-types :as rt]
+            [clojure.walk :as walk]))
 
 (defn count-form? [x]
   (not (and (list? x)
@@ -9,23 +9,24 @@
 
 (defn all-meta [form]
   (let [data (atom [])]
-    (prewalk (fn [x]
-               (when (count-form? x)
-                 (swap! data conj {:meta (meta x)
-                                   :form x})
-                 x))
-             form)
+    (walk/prewalk (fn [x]
+                    (when (count-form? x)
+                      (swap! data conj {:meta (meta x)
+                                        :form x})
+                      x))
+                  form)
     @data))
 
 (defn read-all-forms [f]
-  (let [rdr (indexing-push-back-reader (slurp f))
+  (let [rdr (rt/indexing-push-back-reader (slurp f))
         EOF (Object.)
         opts {:eof EOF}]
-    (loop [ret []]
-      (let [form (ctr/read opts rdr)]
-        (if (= EOF form)
-          ret
-          (recur (conj ret form)))))))
+    (binding [reader/*alias-map* identity]  ;; don't need accurate alias resolving
+      (loop [ret []]
+        (let [form (reader/read opts rdr)]
+          (if (= EOF form)
+            ret
+            (recur (conj ret form))))))))
 
 (defn metrics [f]
   (let [m (->> f (read-all-forms) (mapcat all-meta))]
@@ -38,7 +39,6 @@
                  (count))}))
 
 (comment
-
-  (metrics "./src/aiba/cloc/core.clj")
-
+  (metrics "./src/aiba/lein_count/core.clj")
+  (metrics "./test-data/aliased_ns_kw.clj")
   )
