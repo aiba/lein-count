@@ -1,10 +1,10 @@
 (ns aiba.lein-count.core
   (:require [clojure.java.io :as io]
-            [clojure.pprint :as pprint]
             [clojure.string :as string]
             [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as rt]
-            [clojure.walk :as walk])
+            [clojure.walk :as walk]
+            [doric.core :as doric])
   (:import clojure.lang.ExceptionInfo
            java.io.File))
 
@@ -12,9 +12,12 @@
   (reduce-kv (fn [r k v] (assoc r k (f v))) {} m))
 
 (defn relative-path-str [^File f]
-  (-> (.getAbsolutePath f)
-      (string/replace (re-pattern (str "^" (System/getProperty "user.dir"))) "")
-      (string/replace #"^\/\.\/" "./")))
+  (let [wd (let [x (System/getProperty "user.dir")]
+             (if (string/ends-with? x "/")
+               x
+               (str x "/")))]
+    (-> (.getAbsolutePath f)
+        (string/replace (re-pattern (str "^" wd)) ""))))
 
 (defn count-form? [x]
   (not (and (list? x)
@@ -78,33 +81,30 @@
 
 (defn print-report [ms & [opts]]
   (let [info (get opts :info println)
-        warn (get opts :warn (partial println "WARN:"))
-        errs (filter :error ms)
+        warn (get opts :warn println)
+        errs (->> ms
+                  (filter :error)
+                  (map (fn [x] (assoc (:error x) :file (:file x)))))
         fms (remove :error ms)]
-    (info (count ms) "files.")
+    (info "Found" (count ms) "source files.")
     (when (seq errs)
-      (warn (count errs) "errors:")
-      (pprint/print-table [:file :error] errs))
+      (warn "Encountered" (count errs) "reader errors:")
+      (doseq [e errs]
+        (warn (pr-str e))))
     (when (seq fms)
       (let [by-ext (tally-by-ext fms)
-            totals (assoc (->> by-ext (map #(dissoc % :ext)) (merge-with +) first)
+            totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
                           :ext "SUM:")]
-        (info (with-out-str
-                (pprint/print-table
-                 [:ext :files :lines :nodes]
-                 (concat (sort-by #(get % :nodes -1) > by-ext)
-                         [totals]))))))))
+        (info "")
+        (info (doric/table [{:name :ext   :align :right}
+                            {:name :files :align :right}
+                            {:name :lines :align :right}
+                            {:name :nodes :align :right}]
+                           (concat (sort-by #(get % :nodes -1) > by-ext)
+                                   [{}]
+                                   [totals])))))))
 
 (comment
   (print-report
-   (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"
-             "/Users/aiba/git/gambit/proj/src"]))
-
-  (print-report
-   (metrics ["/Users/aiba/git/gambit/proj/src/cljs"]))
-
-  (totals (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"
-                    "/Users/aiba/git/gambit/proj/src"
-                    ] ))
-
+   (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"]))
   )
