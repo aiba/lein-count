@@ -1,7 +1,8 @@
 (ns aiba.lein-count.core
   (:require [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as rt]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk])
+  (:import clojure.lang.ExceptionInfo))
 
 (defn count-form? [x]
   (not (and (list? x)
@@ -29,16 +30,20 @@
             (recur (conj ret form))))))))
 
 (defn metrics [f]
-  (let [m (->> f (read-all-forms) (mapcat all-meta))]
-    {:nodes (count m)
-     :lines (->> m
-                 (map :meta)
-                 (mapcat (juxt :line :end-line))
-                 (remove nil?)
-                 (distinct)
-                 (count))}))
+  (try
+    (let [m (->> f (read-all-forms) (mapcat all-meta))]
+      {:nodes (count m)
+       :lines (->> m
+                   (map :meta)
+                   (mapcat (juxt :line :end-line))
+                   (remove nil?)
+                   (distinct)
+                   (count))})
+    (catch ExceptionInfo e
+      {:error (ex-data e)})))
 
 (comment
   (metrics "./src/aiba/lein_count/core.clj")
   (metrics "./test-data/aliased_ns_kw.clj")
+  (metrics "./test-data/fn_doc.clj")
   )
