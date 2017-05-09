@@ -5,7 +5,7 @@
 
 (defn count [project & args]
   (let [dirs (:source-paths project)]
-    (info "Counting lines from" (pr-str dirs))
+    (info "Examining dirs" (pr-str dirs) "\n")
     (lc/print-report (lc/metrics dirs) {:info info :warn warn})))
 
 (comment
