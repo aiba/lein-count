@@ -8,9 +8,9 @@
   (->> paths
        (map io/file)
        (mapcat file-seq)
-       (filter #(and (not (.isDirectory %))
-                     (.endsWith (.getName %) ".clj")))))
-
+       (filter (fn [f]
+                 (and (not (.isDirectory f))
+                      (some #(.endsWith (.getName f) %) ["clj" "cljs" "cljc"]))))))
 
 (defn count [project & args]
   (let [src-paths (:source-paths project)
