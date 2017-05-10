@@ -12,7 +12,7 @@ forms and `#_(reader-ignored forms)` are not counted.
 Merge into `~/.lein/profiles.clj`:
 
 ```clojure
-{:user {:plugins [[lein-count "1.0.1"]]}}
+{:user {:plugins [[lein-count "1.0.2"]]}}
 ```
 
 Now you can run `lein count` in a project.  Example:

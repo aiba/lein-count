@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.2
+
+* Exclude `org.clojure/clojure` from project dependencies.
+
 ## 1.0.1
 
 * Fix parsing of artifacts with periods in the name.
