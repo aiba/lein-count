@@ -75,7 +75,9 @@
           {:error e}))
       (assoc :path (:path data))))
 
-(def code-extensions ["clj" "cljs" "cljc"])
+(defn source-path? [^String p]
+  (boolean
+   (some #(string/ends-with? p %) ["clj" "cljs" "cljc"])))
 
 (defn read-files [path]
   (let [f (io/file path)]
@@ -84,14 +86,24 @@
       (.isDirectory f)
       (->> (file-seq f)
            (filter (fn [f]
-                     (and (.isFile f)
-                          (some #(string/ends-with? (.getName f) %) code-extensions))))
+                     (and (.isFile f) (source-path? (.getName f)))))
            (map (fn [f]
                   {:path (relative-path-str f)
                    :content (slurp f)})))
 
       (string/ends-with? (.getName f) ".jar")
-      [] ;; TODO: read files from jar
+      (let [jf (JarFile. f)]
+        (->> (.entries jf)
+             (iterator-seq)
+             (map (fn [e]
+                    (let [path (.getName e)]
+                      (when (and (not (.isDirectory e))
+                                 (source-path? path)
+                                 (not (string/starts-with? path "META-INF/"))
+                                 (not (= path "project.clj")))
+                        {:path path
+                         :content (slurp (.getInputStream jf e))}))))
+             (remove nil?)))
 
       ;; This file was specifically asked for so read it regardless of extension
       :else
@@ -190,14 +202,4 @@
 
   (print-report (metrics ["./src" "./test-data"]))
 
-  )
-
-
-(comment
-  #_(let [jf (io/file "/Users/aiba/.m2/repository/com/gfredericks/vcr-clj/0.4.14/vcr-clj-0.4.14.jar")]
-     (->> (ctn-find/clojure-sources-in-jar (JarFile. jf))
-          (remove #{"project.clj"})
-          (remove #(string/starts-with? % "META-INF/"))
-          )
-     )
   )

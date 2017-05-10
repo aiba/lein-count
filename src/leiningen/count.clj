@@ -2,10 +2,11 @@
   (:refer-clojure :exclude [count])
   (:require [aiba.lein-count.core :as lc]
             [clojure.java.io :as io]
-            [leiningen.core.main :refer [info warn]]
+            [clojure.string :as string]
             [leiningen.core.classpath :as lcp]
-            [leiningen.help :as help]
-            [clojure.string :as string]))
+            [leiningen.core.main :refer [info warn]]
+            [leiningen.help :as help])
+  (:import clojure.lang.ExceptionInfo))
 
 (defn ^:private all-source-paths [project]
   (when project
@@ -15,22 +16,23 @@
 
 (defn ^:private artifact-jar [[a b]]
   (when (and a b)
-    (let [project {:repositories [["central" {:url "https://repo1.maven.org/maven2/"
-                                              :snapshots false}]
-                                  ["clojars" {:url "https://clojars.org/repo/"}]]
-                   :dependencies [[(symbol a) b]]}
-          jars (lcp/resolve-managed-dependencies
-                :dependencies :managed-dependencies project)
-          s (str (string/replace a #"\." "/")
-                 "/" b "/"
-                 (-> a (string/split #"\/") last)
-                 "-" b ".jar")
-          j (->> jars
-                 (filter #(string/ends-with? % s))
-                 (first))]
-      (when-not j
-        (warn "Could not retreive artifact" [a b]))
-      j)))
+    (try
+      (let [project {:repositories [["central" {:url "https://repo1.maven.org/maven2/"
+                                                :snapshots false}]
+                                    ["clojars" {:url "https://clojars.org/repo/"}]]
+                     :dependencies [[(symbol a) b]]}
+            jars (lcp/resolve-managed-dependencies
+                  :dependencies :managed-dependencies project)
+            s (str (string/replace a #"\." "/")
+                   "/" b "/"
+                   (-> a (string/split #"\/") last)
+                   "-" b ".jar")]
+        (->> jars
+             (filter #(string/ends-with? % s))
+             (first)))
+      (catch ExceptionInfo e
+        (warn "Exception retreiving artifact" [a b])
+        (warn (.getMessage e))))))
 
 (defn ^:no-project-needed count
   "Count lines of code.
@@ -77,6 +79,6 @@
   )
 
 (comment
-  (artifact-jar ["com.gfredericks/vcr-clj" "0.4.14"])
-  (artifact-jar ["ring" "1.6.0"])
+  (count nil ":artifact" "com.gfredericks/vcr-clj" "0.4.14")
+  (count nil ":by-file" ":artifact" "com.gfredericks/vcr-clj" "0.4.143")
   )
