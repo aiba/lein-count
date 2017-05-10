@@ -769,7 +769,7 @@
                   (ns-name *ns*)
 
                   (= \: (first token))
-                  (some-> token (subs 1) parse-symbol second' symbol resolve-ns ns-name)
+                  (some-> token (subs 1) parse-symbol second' symbol resolve-ns ns-name*)
 
                   :else
                   (some-> token parse-symbol second'))]
