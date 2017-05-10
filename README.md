@@ -50,9 +50,14 @@ $ lein cloc :artifact [com.stuartsierra/component "0.3.2"]
 ```
 
 
+## Known Issues
 
-
-
+* Tagged literals (such as `#js {:a 1, :b 2}`) is treated as one line and on elment,
+  even if it spans many lines. This is because `clojure.tools.reader` does not
+  return metadata for symbols inside a tagged literal. This makes sense from a
+  certain perspective. A tagged literal is like inserting one constant into the
+  code. But in the case of e.g. clojurescript tagged literal with functions as the
+  values, it may be undercounting.
 
 ## License
 
