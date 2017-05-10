@@ -85,7 +85,7 @@
 
 ;; Generating ASCII report —————————————————————————————————————————————————————————
 
-(def columns [{:name :ext   :align :right}
+(def columns [{:name :ext   :align :left}
               {:name :file  :align :left}
               {:name :files :align :right}
               {:name :lines :align :right :title "Lines of Code"}
