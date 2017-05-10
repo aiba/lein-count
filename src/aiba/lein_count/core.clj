@@ -51,7 +51,8 @@
               :features #{:clj :cljs :cljr}}]
     (binding [reader/*alias-map* identity ;; don't need accurate alias resolving
               reader/*default-data-reader-fn* (fn [tag x] x)
-              reader/*wrap-constants* true]
+              reader/*wrap-constants* true
+              reader/*read-eval* :skip]
       (loop [ret []]
         (let [form (reader/read opts rdr)]
           (if (= EOF form)
@@ -156,26 +157,19 @@
 
 (comment
 
-  (print-report (metrics ["/Users/aiba/git/gambit/proj/src"]))
-
   (print-report (metrics ["/Users/aiba/git"]))
+  (print-report (metrics ["/Users/aiba/oss/clojurescript/src/main"]))
+  (print-report (metrics ["/Users/aiba/oss/clojure"]))
+
+  (print-report (metrics ["/Users/aiba/oss"]))
 
   (print-report (metrics ["./src" "./test-data"])
                 {:by-file true})
 
-  (print-report (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"])
-                {:by-file true})
-
-  (print-report (metrics ["./test-data/tags.clj"]))
-  (print-report (metrics ["./test-data/constants.clj"]))
-
-  (let [f (io/file "./test-data/test1.clj")
-        m (mapcat all-meta
-                  (read-all-forms (slurp f)))]
-    (->> m
-         (map :meta)
-         (remove nil?)
-         (map (juxt :line :end-line))
-         ))
+  (->> "/Users/aiba/oss/clojure/test/clojure/test_clojure/compilation.clj"
+       (slurp)
+       (read-all-forms)
+       (mapcat all-meta)
+       )
 
   )

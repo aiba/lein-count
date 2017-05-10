@@ -598,9 +598,10 @@
 (defn- read-eval
   "Evaluate a reader literal"
   [rdr _ opts pending-forms]
-  (when-not *read-eval*
-    (reader-error rdr "#= not allowed when *read-eval* is false"))
-  (eval (read* rdr true nil opts pending-forms)))
+  (cond
+    (not *read-eval*)     (reader-error rdr "#= not allowed when *read-eval* is false")
+    (= *read-eval* :skip) nil
+    :else                 (eval (read* rdr true nil opts pending-forms))))
 
 (def ^:private ^:dynamic gensym-env nil)
 
@@ -820,37 +821,43 @@
     nil))
 
 (defn- read-ctor [rdr class-name opts pending-forms]
-  (when-not *read-eval*
-    (reader-error "Record construction syntax can only be used when *read-eval* == true"))
-  (let [class (Class/forName (name class-name) false (RT/baseLoader))
-        ch (read-past whitespace? rdr)] ;; differs from clojure
-    (if-let [[end-ch form] (case ch
-                             \[ [\] :short]
-                             \{ [\} :extended]
-                             nil)]
-      (let [entries (to-array (read-delimited end-ch rdr opts pending-forms))
-            numargs (count entries)
-            all-ctors (.getConstructors class)
-            ctors-num (count all-ctors)]
-        (case form
-          :short
-          (loop [i 0]
-            (if (>= i ctors-num)
-              (reader-error rdr "Unexpected number of constructor arguments to " (str class)
-                            ": got" numargs)
-              (if (== (count (.getParameterTypes ^Constructor (aget all-ctors i)))
-                      numargs)
-                (Reflector/invokeConstructor class entries)
-                (recur (inc i)))))
-          :extended
-          (let [vals (RT/map entries)]
-            (loop [s (keys vals)]
-              (if s
-                (if-not (keyword? (first s))
-                  (reader-error rdr "Unreadable ctor form: key must be of type clojure.lang.Keyword")
-                  (recur (next s)))))
-            (Reflector/invokeStaticMethod class "create" (object-array [vals])))))
-      (reader-error rdr "Invalid reader constructor form"))))
+  (cond
+    (not *read-eval*)
+    (reader-error "Record construction syntax can only be used when *read-eval* == true")
+
+    (= *read-eval* :skip)
+    nil
+
+    :else
+    (let [class (Class/forName (name class-name) false (RT/baseLoader))
+          ch (read-past whitespace? rdr)] ;; differs from clojure
+      (if-let [[end-ch form] (case ch
+                               \[ [\] :short]
+                               \{ [\} :extended]
+                               nil)]
+        (let [entries (to-array (read-delimited end-ch rdr opts pending-forms))
+              numargs (count entries)
+              all-ctors (.getConstructors class)
+              ctors-num (count all-ctors)]
+          (case form
+            :short
+            (loop [i 0]
+              (if (>= i ctors-num)
+                (reader-error rdr "Unexpected number of constructor arguments to " (str class)
+                              ": got" numargs)
+                (if (== (count (.getParameterTypes ^Constructor (aget all-ctors i)))
+                        numargs)
+                  (Reflector/invokeConstructor class entries)
+                  (recur (inc i)))))
+            :extended
+            (let [vals (RT/map entries)]
+              (loop [s (keys vals)]
+                (if s
+                  (if-not (keyword? (first s))
+                    (reader-error rdr "Unreadable ctor form: key must be of type clojure.lang.Keyword")
+                    (recur (next s)))))
+              (Reflector/invokeStaticMethod class "create" (object-array [vals])))))
+        (reader-error rdr "Invalid reader constructor form")))))
 
 (defn- read-tagged [rdr initch opts pending-forms]
   (let [tag (read* rdr true nil opts pending-forms)]
