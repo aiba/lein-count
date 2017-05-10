@@ -4,9 +4,11 @@
 ;; https://dev.clojure.org/jira/browse/TRDR-42
 ;; Thank you Thomas Heller.
 ;;
-;; I made further modifications to read-keyword to enable constant-wrapping of keywords.
+;; I made further modifications to read-keyword to enable constant-wrapping of
+;; keywords, and fixed has-feature? and read-arg to support wrapped constants.
 ;; -- aiba
-;;----------------------------------------------------------------------------------------
+;;
+;; ----------------------------------------------------------------------------------------
 
 
 ;;   Copyright (c) Nicola Mometto, Rich Hickey & contributors.
@@ -86,6 +88,11 @@
 
 (defn constant? [x]
   (instance? Constant x))
+
+(defn const-val [x]
+  (if (constant? x)
+    (:value x)
+    x))
 
 (defn wrap-constant [loc-start rdr constant]
   (if-not *wrap-constants*
@@ -422,9 +429,10 @@
 
 (defn- has-feature?
   [rdr feature opts]
-  (if (keyword? feature)
-    (or (= :default feature) (contains? (get opts :features) feature))
-    (reader-error rdr (str "Feature should be a keyword: " feature))))
+  (let [feature (const-val feature)]
+    (if (keyword? feature)
+      (or (= :default feature) (contains? (get opts :features) feature))
+      (reader-error rdr (str "Feature should be a keyword: " feature)))))
 
 (defn- check-eof-error
   [form rdr ^long first-line]
@@ -572,20 +580,20 @@
     (read-symbol rdr pct)
     (let [ch (peek-char rdr)]
       (cond
-       (or (whitespace? ch)
-           (macro-terminating? ch)
-           (nil? ch))
-       (register-arg 1)
+        (or (whitespace? ch)
+            (macro-terminating? ch)
+            (nil? ch))
+        (register-arg 1)
 
-       (identical? ch \&)
-       (do (read-char rdr)
-           (register-arg -1))
+        (identical? ch \&)
+        (do (read-char rdr)
+            (register-arg -1))
 
-       :else
-       (let [n (read* rdr true nil opts pending-forms)]
-         (if-not (integer? n)
-           (throw (IllegalStateException. "Arg literal must be %, %& or %integer"))
-           (register-arg n)))))))
+        :else
+        (let [n (const-val (read* rdr true nil opts pending-forms))]
+          (if-not (integer? n)
+            (throw (IllegalStateException. "Arg literal must be %, %& or %integer"))
+            (register-arg n)))))))
 
 (defn- read-eval
   "Evaluate a reader literal"
@@ -852,7 +860,7 @@
       (tagged-literal tag (read* rdr true nil opts pending-forms))
       (if-let [f (or (*data-readers* tag)
                      (default-data-readers tag))]
-        (f (read* rdr true nil opts pending-forms))
+        (f (const-val (read* rdr true nil opts pending-forms)))
         (if (.contains (name tag) ".")
           (read-ctor rdr tag opts pending-forms)
           (if-let [f *default-data-reader-fn*]

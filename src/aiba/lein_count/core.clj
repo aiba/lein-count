@@ -158,6 +158,8 @@
 
   (print-report (metrics ["/Users/aiba/git/gambit/proj/src"]))
 
+  (print-report (metrics ["/Users/aiba/git"]))
+
   (print-report (metrics ["./src" "./test-data"])
                 {:by-file true})
 
@@ -167,7 +169,7 @@
   (print-report (metrics ["./test-data/tags.clj"]))
   (print-report (metrics ["./test-data/constants.clj"]))
 
-  (let [f (io/file "./test-data/constants.clj")
+  (let [f (io/file "./test-data/test1.clj")
         m (mapcat all-meta
                   (read-all-forms (slurp f)))]
     (->> m
