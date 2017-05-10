@@ -158,6 +158,7 @@
 (comment
 
   (print-report (metrics ["/Users/aiba/git"]))
+
   (print-report (metrics ["/Users/aiba/oss/clojurescript/src/main"]))
   (print-report (metrics ["/Users/aiba/oss/clojure"]))
 
@@ -166,10 +167,9 @@
   (print-report (metrics ["./src" "./test-data"])
                 {:by-file true})
 
-  (->> "/Users/aiba/oss/clojure/test/clojure/test_clojure/compilation.clj"
+  (->> "./test-data/constants.clj"
        (slurp)
        (read-all-forms)
-       (mapcat all-meta)
+       ;;(mapcat all-meta)
        )
-
   )
