@@ -14,6 +14,20 @@
             (when-let [cljsbuild (:cljsbuild project)]
               (mapcat :source-paths (:builds cljsbuild))))))
 
+(defn path-matches-artifact? [p [artifact version]]
+  (let [s (let [v (string/split artifact #"\/")
+                [group id] (case (clojure.core/count v)
+                             1 [nil (first v)]
+                             2 v
+                             (throw (ex-info "Malformed artifact" {:artifact artifact})))]
+            (str "/"
+                 (when group
+                   (str (string/replace group #"\." "/")
+                        "/"))
+                 id "/" version "/"
+                 id "-" version ".jar"))]
+    (string/ends-with? p s)))
+
 (defn ^:private artifact-jar [[a b]]
   (when (and a b)
     (try
@@ -22,13 +36,9 @@
                                     ["clojars" {:url "https://clojars.org/repo/"}]]
                      :dependencies [[(symbol a) b]]}
             jars (lcp/resolve-managed-dependencies
-                  :dependencies :managed-dependencies project)
-            s (str (string/replace a #"\." "/")
-                   "/" b "/"
-                   (-> a (string/split #"\/") last)
-                   "-" b ".jar")]
+                  :dependencies :managed-dependencies project)]
         (->> jars
-             (filter #(string/ends-with? % s))
+             (filter #(path-matches-artifact? % [a b]))
              (first)))
       (catch ExceptionInfo e
         (warn "Exception retreiving artifact" [a b])
@@ -52,7 +62,7 @@
         missing        (some #(when-not (.exists (io/file %)) %) files-or-dirs)]
     (cond
       missing                (warn "File or directory not found:" missing)
-      (empty? files-or-dirs) (help/help nil "count")
+      ;;(empty? files-or-dirs) (help/help nil "count")
       :else                  (do (info "Examining" (pr-str (map #(lc/relative-path-str (io/file %))
                                                                 files-or-dirs)))
                                  (lc/print-report (lc/metrics files-or-dirs)
@@ -81,4 +91,8 @@
 (comment
   (count nil ":artifact" "com.gfredericks/vcr-clj" "0.4.14")
   (count nil ":by-file" ":artifact" "com.gfredericks/vcr-clj" "0.4.143")
+  (count nil ":artifact" "org.clojure/core.async" "0.3.442")
+  (count nil ":artifact" "ring/ring-core" "1.6.0")
+  (count nil ":artifact" "lein-count" "1.0.0")
+  (count nil ":artifact" "medley" "1.0.0")
   )

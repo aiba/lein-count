@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.1
+
+* Fix parsing of artifacts with periods in the name.
+
 ## 1.0.0
 
 * Works on artifacts
