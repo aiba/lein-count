@@ -2,20 +2,12 @@
 
 Use this instead of `cloc` to count lines of clojure code.
 
-This is a [leiningen] plugin to count lines of clojure code. It also counts "nodes" of
-code, which is a potentially better, though less familiar, metric.
-
-[leiningen]: https://leiningen.org/
-
-Unlike `cloc` and other tools, lein-count uses [clojure.tools.reader][ctr] to
-actually parse your code to decide which lines count. This means `(comment ...)`
-forms as well as `#_(reader-ignored forms)` are not counted.
+Unlike `cloc` and other tools, lein-count uses [clojure.tools.reader][ctr] to parse code to decide which lines count. This means `(comment ...)`
+forms and `#_(reader-ignored forms)` are not counted.
 
 [ctr]: https://github.com/clojure/tools.reader
 
 ## Usage
-
-Add to `[aiba/lein-count "1.0.0"]` to the `:plugins` of a project or to your user profile.  I suggest adding to `~/.lein/profiles.clj`, since it's capable of running outside a project context.  So `lein count` becomes a system-wide tool.
 
 Merge into `~/.lein/profiles.clj`:
 
@@ -23,7 +15,7 @@ Merge into `~/.lein/profiles.clj`:
 {:user {:plugins [[aiba/lein-count "1.0.0"]]}}
 ```
 
-Now you can simply run `lein count` in a project.  Example:
+Now you can run `lein count` in a project.  Example:
 
 ```bash
 $ cd ~/oss/clojurescript
@@ -42,19 +34,9 @@ Found 62 source files.
 |------+-------+---------------+--------|
 ```
 
-### :by-file
+### Outside a project
 
-You can also use the `:by-file` switch to show individual file counts.
-
-```
-$ lein count :by-file
-```
-
-### Outside project context
-
-You can specify any number of files or directories to be scanned for source files.  This works inside or outside a project context.
-
-Examples:
+It also works outside a project if you specify which files or directories to be scanned.
 
 ```
 $ lein count some_file.clj
@@ -62,12 +44,49 @@ $ lein count /tmp/dir-of-files
 $ lein count :by-file /tmp/dir-of-files
 ```
 
+### :by-file
+
+You can also use the `:by-file` switch to show individual file counts.
+
+```
+$ cd ~/git/lein-count
+$ lein count :by-file
+
+Examining ("src")
+Found 3 source files.
+
+|------+--------------------------------------------------+---------------+-------|
+| Ext  | File                                             | Lines of Code | Nodes |
+|------+--------------------------------------------------+---------------+-------|
+| clj  | src/aiba/lein_count/constant_wrapping_reader.clj |           829 | 11403 |
+| clj  | src/aiba/lein_count/core.clj                     |           161 |  3012 |
+| clj  | src/leiningen/count.clj                          |            55 |  1155 |
+| ____ | ________________________________________________ | _____________ | _____ |
+|      | SUM:                                             |          1045 | 15570 |
+|------+--------------------------------------------------+---------------+-------|
+```
+
 ### Artfiacts
 
-Finally, `lein count` can take any maven artifact and examine it.
+Finally, `lein count` works on maven artifacts.
 
 ```
 $ lein count :artifact ring/ring-core 1.6.0
+Examining ("/Users/aiba/.m2/repository/ring/ring-core/1.6.0/ring-core-1.6.0.jar")
+Found 26 source files.
+
+|------+-------+---------------+-------|
+| Ext  | Files | Lines of Code | Nodes |
+|------+-------+---------------+-------|
+| clj  |    26 |          1537 | 22263 |
+| ____ | _____ | _____________ | _____ |
+| SUM: |    26 |          1537 | 22263 |
+|------+-------+---------------+-------|
+```
+
+More examples:
+
+```
 $ lein count :by-file :artifact ring/ring-core 1.6.0
 $ lein count :artifact reagent 0.6.1
 $ lein count :by-file :artifact reagent 0.6.1
@@ -75,7 +94,13 @@ $ lein count :by-file :artifact reagent 0.6.1
 
 This is a potentially interesting way to evaluate which libraries to depend on.
 
+## Counting Nodes
+
+You might notice that there is another column called "nodes".  This is a potentially more accurate measure of the "length" of code.  Let's see if it's useful.
+
 ## Implementation
+
+
 
 ## Known Issues
 
