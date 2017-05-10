@@ -1,7 +1,7 @@
 (ns aiba.lein-count.core
-  (:require [clojure.java.io :as io]
+  (:require [aiba.lein-count.constant-wrapping-reader :as reader]
+            [clojure.java.io :as io]
             [clojure.string :as string]
-            [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as rt]
             [clojure.walk :as walk]
             [doric.core :as doric])
@@ -9,6 +9,9 @@
            java.io.File))
 
 ;; Utils ———————————————————————————————————————————————————————————————————————————
+
+(defmacro returning [x & body]
+  `(do ~@body ~x))
 
 (defn map-vals [f m]
   (reduce-kv (fn [r k v] (assoc r k (f v))) {} m))
@@ -31,17 +34,24 @@
   (let [data (atom [])]
     (walk/prewalk (fn [x]
                     (when (count-form? x)
-                      (swap! data conj {:meta (meta x)
-                                        :form x})
-                      x))
+                      (returning x
+                        (swap! data conj (if (reader/constant? x)
+                                           {:form (:value x)
+                                            :meta (:loc-info x)}
+                                           {:form x
+                                            :meta (meta x)})))))
                   form)
     @data))
 
-(defn read-all-forms [f]
-  (let [rdr (rt/indexing-push-back-reader (slurp f))
+(defn read-all-forms [^String s]
+  (let [rdr (rt/indexing-push-back-reader s)
         EOF (Object.)
-        opts {:eof EOF}]
-    (binding [reader/*alias-map* identity]  ;; don't need accurate alias resolving
+        opts {:eof EOF
+              :read-cond :allow
+              :features #{:clj :cljs :cljr}}]
+    (binding [reader/*alias-map* identity ;; don't need accurate alias resolving
+              reader/*default-data-reader-fn* (fn [tag x] x)
+              reader/*wrap-constants* true]
       (loop [ret []]
         (let [form (reader/read opts rdr)]
           (if (= EOF form)
@@ -50,7 +60,7 @@
 
 (defn file-metrics [^File f]
   (-> (try
-        (let [m (->> f (read-all-forms) (mapcat all-meta))]
+        (let [m (->> f (slurp) (read-all-forms) (mapcat all-meta))]
           {:ext (-> (.getName f) (string/split #"\.") last)
            :nodes (count m)
            :lines (->> m
@@ -60,7 +70,7 @@
                        (distinct)
                        (count))})
         (catch ExceptionInfo e
-          {:error (dissoc (ex-data e) :file)}))
+          {:error e}))
       (assoc :file (relative-path-str f))))
 
 (defn metrics [files-or-dirs]
@@ -103,10 +113,10 @@
   (let [by-ext (->> fms
                     (group-by :ext)
                     (map-vals (fn [ms]
-                                (as-> fms $
+                                (as-> ms $
                                   (map #(dissoc % :ext :file) $)
                                   (apply merge-with + $)
-                                  (assoc $ :files (count fms)))))
+                                  (assoc $ :files (count ms)))))
                     (seq)
                     (map #(assoc (val %) :ext (key %))))
         totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
@@ -127,7 +137,9 @@
         warn (get opts :warn println)
         errs (->> ms
                   (filter :error)
-                  (map (fn [x] (assoc (:error x) :file (:file x)))))
+                  (map (fn [x] (merge (ex-data (:error x))
+                                     x
+                                     {:error (.getMessage (:error x))}))))
         fms (remove :error ms)]
     (info "Found" (count ms) "source files.")
     (when (seq errs)
@@ -144,10 +156,24 @@
 
 (comment
 
-  (print-report (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"])
-                {})
+  (print-report (metrics ["/Users/aiba/git/gambit/proj/src"]))
+
+  (print-report (metrics ["./src" "./test-data"])
+                {:by-file true})
 
   (print-report (metrics ["./src" "./test-data" "/Users/aiba/git/scratch"])
                 {:by-file true})
+
+  (print-report (metrics ["./test-data/tags.clj"]))
+  (print-report (metrics ["./test-data/constants.clj"]))
+
+  (let [f (io/file "./test-data/constants.clj")
+        m (mapcat all-meta
+                  (read-all-forms (slurp f)))]
+    (->> m
+         (map :meta)
+         (remove nil?)
+         (map (juxt :line :end-line))
+         ))
 
   )
