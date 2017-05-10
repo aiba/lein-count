@@ -10,7 +10,11 @@
             (when-let [cljsbuild (:cljsbuild project)]
               (mapcat :source-paths (:builds cljsbuild))))))
 
-(defn ^:no-project-needed count [project & args]
+(defn ^:no-project-needed count
+  "Count lines of code.
+
+  USAGE: lein count [:by-file] <FILE|DIR>"
+  [project & args]
   (let [[by-file args] (if (= (first args) ":by-file")
                          [true (rest args)]
                          [false args])
