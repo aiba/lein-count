@@ -44,7 +44,8 @@
                          [false args])
         files-or-dirs  (cond
                          (empty? args)                (all-source-paths project)
-                         (= (first args) ":artifact") [(artifact-jar (rest args))]
+                         (= (first args) ":artifact") (when-let [j (artifact-jar (rest args))]
+                                                        [j])
                          :else                        args)
         missing        (some #(when-not (.exists (io/file %)) %) files-or-dirs)]
     (cond
@@ -78,6 +79,4 @@
 (comment
   (artifact-jar ["com.gfredericks/vcr-clj" "0.4.14"])
   (artifact-jar ["ring" "1.6.0"])
-
-  (count nil ":artifact" "ring" "1.6.0")
   )
