@@ -99,11 +99,11 @@ You might notice that there is another column called "nodes".  This is a potenti
 
 ## Implementation
 
-We use a modified version of [clojure.tools.reader][ctr] to parse the source files.  The modifications make the reader more lenient and also wrap constants values in metadata so they get counted.  Once the file is parsed, we simply count the unique lines upon which a parsed clojure form starts or ends.
+We use a modified version of [clojure.tools.reader][ctr] to parse the source files.  The modifications make the reader more lenient and also wrap constant values in metadata so they get counted.  Once a file is parsed, we simply count the unique lines upon which a clojure form starts or ends.
 
 If you find an example where this seems off, please file an github issue.
 
-The node count is simply the count of the number of forms that appear in the source.
+The node count is just the total number of parsed forms.
 
 ## Known Issues
 
