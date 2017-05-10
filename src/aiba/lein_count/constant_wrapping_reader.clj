@@ -598,10 +598,11 @@
 (defn- read-eval
   "Evaluate a reader literal"
   [rdr _ opts pending-forms]
-  (cond
-    (not *read-eval*)     (reader-error rdr "#= not allowed when *read-eval* is false")
-    (= *read-eval* :skip) nil
-    :else                 (eval (read* rdr true nil opts pending-forms))))
+  (let [x (read* rdr true nil opts pending-forms)]
+    (cond
+      (not *read-eval*)     (reader-error rdr "#= not allowed when *read-eval* is false")
+      (= *read-eval* :skip) x
+      :else                 (eval x))))
 
 (def ^:private ^:dynamic gensym-env nil)
 
@@ -826,7 +827,13 @@
     (reader-error "Record construction syntax can only be used when *read-eval* == true")
 
     (= *read-eval* :skip)
-    nil
+    (do (let [ch (read-past whitespace? rdr)]
+          (when-let [[end-ch form] (case ch
+                                     \[ [\] :short]
+                                     \{ [\} :extended]
+                                     nil)]
+            (read-delimited end-ch rdr opts pending-forms)
+            nil)))
 
     :else
     (let [class (Class/forName (name class-name) false (RT/baseLoader))
