@@ -12,7 +12,7 @@ forms and `#_(reader-ignored forms)` are not counted.
 Merge into `~/.lein/profiles.clj`:
 
 ```clojure
-{:user {:plugins [[aiba/lein-count "1.0.0"]]}}
+{:user {:plugins [[lein-count "1.0.0"]]}}
 ```
 
 Now you can run `lein count` in a project.  Example:
@@ -67,7 +67,7 @@ Found 3 source files.
 
 ### Artifacts
 
-Finally, `lein count` works on maven artifacts.
+`lein count` works on maven artifacts.
 
 ```
 $ lein count :artifact ring/ring-core 1.6.0
