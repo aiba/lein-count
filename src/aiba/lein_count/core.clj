@@ -6,7 +6,8 @@
             [clojure.walk :as walk]
             [doric.core :as doric])
   (:import clojure.lang.ExceptionInfo
-           java.io.File))
+           java.io.File
+           java.util.jar.JarFile))
 
 ;; Utils ———————————————————————————————————————————————————————————————————————————
 
@@ -59,10 +60,10 @@
             ret
             (recur (conj ret form))))))))
 
-(defn file-metrics [^File f]
+(defn file-metrics [data]
   (-> (try
-        (let [m (->> f (slurp) (read-all-forms) (mapcat all-meta))]
-          {:ext (-> (.getName f) (string/split #"\.") last)
+        (let [m (->> (:content data) (read-all-forms) (mapcat all-meta))]
+          {:ext (-> (:path data) (string/split #"\.") last)
            :nodes (count m)
            :lines (->> m
                        (map :meta)
@@ -72,21 +73,41 @@
                        (count))})
         (catch ExceptionInfo e
           {:error e}))
-      (assoc :file (relative-path-str f))))
+      (assoc :path (:path data))))
 
-(defn metrics [files-or-dirs]
-  (->> files-or-dirs
-       (map io/file)
-       (mapcat file-seq)
-       (filter (fn [f]
-                 (and (not (.isDirectory f))
-                      (some #(.endsWith (.getName f) %) ["clj" "cljs" "cljc"]))))
+(def code-extensions ["clj" "cljs" "cljc"])
+
+(defn read-files [path]
+  (let [f (io/file path)]
+    (assert (.exists f) (str "Doesn't exist: " path))
+    (cond
+      (.isDirectory f)
+      (->> (file-seq f)
+           (filter (fn [f]
+                     (and (.isFile f)
+                          (some #(string/ends-with? (.getName f) %) code-extensions))))
+           (map (fn [f]
+                  {:path (relative-path-str f)
+                   :content (slurp f)})))
+
+      (string/ends-with? (.getName f) ".jar")
+      [] ;; TODO: read files from jar
+
+      ;; This file was specifically asked for so read it regardless of extension
+      :else
+      [{:path (relative-path-str f)
+        :content (slurp f)}])))
+
+;; each path is a string pointing to either a file, a dir, or a jar
+(defn metrics [paths]
+  (->> paths
+       (mapcat read-files)
        (map file-metrics)))
 
 ;; Generating ASCII report —————————————————————————————————————————————————————————
 
 (def columns [{:name :ext   :align :left}
-              {:name :file  :align :left}
+              {:name :path  :align :left :title "File"}
               {:name :files :align :right}
               {:name :lines :align :right :title "Lines of Code"}
               {:name :nodes :align :right}])
@@ -115,21 +136,21 @@
                     (group-by :ext)
                     (map-vals (fn [ms]
                                 (as-> ms $
-                                  (map #(dissoc % :ext :file) $)
+                                  (map #(dissoc % :ext :path) $)
                                   (apply merge-with + $)
                                   (assoc $ :files (count ms)))))
                     (seq)
                     (map #(assoc (val %) :ext (key %))))
         totals (assoc (->> by-ext (map #(dissoc % :ext)) (apply merge-with +))
                       :ext "SUM:")]
-    (ascii-table (concat (sort-by #(get % :nodes -1) > by-ext)
+    (ascii-table (concat (sort-by #(get % :lines -1) > by-ext)
                          [(dash-row by-ext)]
                          [totals]))))
 
 (defn table-by-file [fms]
-  (let [totals (assoc (->> fms (map #(dissoc % :ext :file)) (apply merge-with +))
-                      :file "SUM:")]
-    (ascii-table (concat (sort-by #(get % :nodes -1) > fms)
+  (let [totals (assoc (->> fms (map #(dissoc % :ext :path)) (apply merge-with +))
+                      :path "SUM:")]
+    (ascii-table (concat (sort-by #(get % :lines -1) > fms)
                          [(dash-row fms)]
                          [totals]))))
 
@@ -167,9 +188,16 @@
   (print-report (metrics ["./src" "./test-data"])
                 {:by-file true})
 
-  (->> "./test-data/constants.clj"
-       (slurp)
-       (read-all-forms)
-       ;;(mapcat all-meta)
-       )
+  (print-report (metrics ["./src" "./test-data"]))
+
+  )
+
+
+(comment
+  #_(let [jf (io/file "/Users/aiba/.m2/repository/com/gfredericks/vcr-clj/0.4.14/vcr-clj-0.4.14.jar")]
+     (->> (ctn-find/clojure-sources-in-jar (JarFile. jf))
+          (remove #{"project.clj"})
+          (remove #(string/starts-with? % "META-INF/"))
+          )
+     )
   )
