@@ -25,6 +25,22 @@
     (-> (.getAbsolutePath f)
         (string/replace (re-pattern (str "^" wd)) ""))))
 
+(defn distinct-by-first
+  ([f]
+   (fn [rf]
+     (let [seen (volatile! #{})]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+          (let [k (f input)]
+            (if (contains? @seen k)
+              result
+              (do (vswap! seen conj k)
+                  (rf result input)))))))))
+  ([f coll]
+   (sequence (distinct-by-first f) coll)))
+
 ;; Analyzing code ——————————————————————————————————————————————————————————————————
 
 (defn count-form? [x]
@@ -114,6 +130,7 @@
 (defn metrics [paths]
   (->> paths
        (mapcat read-files)
+       (distinct-by-first :path)
        (map file-metrics)))
 
 ;; Generating ASCII report —————————————————————————————————————————————————————————
@@ -202,4 +219,6 @@
 
   (print-report (metrics ["./src" "./test-data"]))
 
+  (= (metrics ["/tmp/re-frame-realword-example-app/src"])
+     (metrics (repeat 4 "/tmp/re-frame-realword-example-app/src")))
   )
