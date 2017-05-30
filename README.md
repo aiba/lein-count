@@ -2,8 +2,11 @@
 
 Use this instead of `cloc` to count lines of clojure code.
 
-Unlike `cloc` and other tools, lein-count uses [clojure.tools.reader][ctr] to parse code to decide which lines count. This means `(comment ...)`
-forms and `#_(reader-ignored forms)` are not counted.
+Unlike `cloc` and other tools, lein-count uses [clojure.tools.reader][ctr] to parse
+code to decide which lines count. This means `(comment ...)` forms and
+`#_(reader-ignored forms)` are not counted.
+
+[Rationale](http://aaroniba.net/counting-clojure-code)
 
 [ctr]: https://github.com/clojure/tools.reader
 
