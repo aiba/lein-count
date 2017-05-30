@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.3
+
+* Fix double-counting of files when the same `:source-path` is specified more than
+  once.
+
 ## 1.0.2
 
 * Exclude `org.clojure/clojure` from project dependencies.
