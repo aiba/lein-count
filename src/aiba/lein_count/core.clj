@@ -19,11 +19,12 @@
 
 (defn relative-path-str [^File f]
   (let [wd (let [x (System/getProperty "user.dir")]
-             (if (string/ends-with? x "/")
+             (if (string/ends-with? x File/separator)
                x
-               (str x "/")))]
+               (str x File/separator)))
+        wd-prefix (re-pattern (str "^" (string/re-quote-replacement wd)))]
     (-> (.getAbsolutePath f)
-        (string/replace (re-pattern (str "^" wd)) ""))))
+        (string/replace wd-prefix ""))))
 
 (defn distinct-by-first
   ([f]
