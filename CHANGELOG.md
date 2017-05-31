@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.4
+
+* Works on Windows.
+
 ## 1.0.3
 
 * Fix double-counting of files when the same `:source-path` is specified more than
