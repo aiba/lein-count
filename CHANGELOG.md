@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.7
+
+* Better path deduplication.
+
 ## 1.0.6
 
 * Non-existent file or directory is nonfatal.  Will just print warning.
