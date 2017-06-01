@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+* Non-existent file or directory is nonfatal.  Will just print warning.
+
 ## 1.0.4
 
 * Works on Windows.
