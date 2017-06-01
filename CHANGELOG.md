@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 1.0.5
 
 * Non-existent file or directory is nonfatal.  Will just print warning.
 
