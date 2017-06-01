@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.0.5
+## 1.0.6
 
 * Non-existent file or directory is nonfatal.  Will just print warning.
 
