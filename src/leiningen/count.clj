@@ -1,11 +1,11 @@
 (ns leiningen.count
   (:refer-clojure :exclude [count])
   (:require [aiba.lein-count.core :as lc]
+            [aiba.lein-count.utils :refer [distinct-by-first relative-path-str]]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [leiningen.core.classpath :as lcp]
-            [leiningen.core.main :refer [info warn]]
-            [leiningen.help :as help])
+            [leiningen.core.main :refer [info warn]])
   (:import clojure.lang.ExceptionInfo))
 
 (defn ^:private all-source-paths [project]
@@ -62,12 +62,12 @@
                          [true (rest args)]
                          [false args])
         files-or-dirs  (->> (all-files-or-dirs project args)
-                            (distinct)
+                            (distinct-by-first #(.getCanonicalPath (io/file %)))
                             (filter (fn [f]
                                       (or (.exists (io/file f))
                                           (do (warn "Skipping non-existent file or directory:" f)
                                               false)))))]
-    (info "Examining" (pr-str (map #(lc/relative-path-str (io/file %))
+    (info "Examining" (pr-str (map #(relative-path-str (io/file %))
                                    files-or-dirs)))
     (lc/print-report (lc/metrics files-or-dirs)
                      {:info    info
@@ -93,6 +93,7 @@
   (count nil "/tmp/doesnt-exist")
   (count nil "/tmp/doesnt-exist" "./src")
   (count nil "/tmp/doesnt-exist" "./src" "./src" "./src")
+  (count nil "/tmp/doesnt-exist" "./src" "src" "././src")
   )
 
 (comment
