@@ -62,6 +62,7 @@
                          [true (rest args)]
                          [false args])
         files-or-dirs  (->> (all-files-or-dirs project args)
+                            (distinct)
                             (filter (fn [f]
                                       (or (.exists (io/file f))
                                           (do (warn "Skipping non-existent file or directory:" f)
@@ -91,6 +92,7 @@
   (count nil ":by-file" "./test-data/malformed.clj")
   (count nil "/tmp/doesnt-exist")
   (count nil "/tmp/doesnt-exist" "./src")
+  (count nil "/tmp/doesnt-exist" "./src" "./src" "./src")
   )
 
 (comment
@@ -104,5 +106,4 @@
   (count nil ":artifact" "lein-count" "1.0.2")
   (count nil ":artifact" "lein-count" "1.0.3")
   (count nil ":artifact" "lein-count" "1.0.4")
-
   )
