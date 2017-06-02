@@ -192,4 +192,16 @@
 
   (= (metrics ["/tmp/re-frame-realword-example-app/src"])
      (metrics (repeat 4 "/tmp/re-frame-realword-example-app/src")))
+
+  (metrics ["./test-data/fn_doc.clj"])
+
+  (->> ["./test-data/fn_doc.clj"]
+       (mapcat read-files)
+       first
+       :content
+       (read-all-forms)
+       (mapcat all-meta)
+       )
+
+  (metrics ["./test-data/test1.clj"])
   )

@@ -16,7 +16,12 @@
 
 (def file-test-cases
   {"aliased_ns_kw.clj" {:lines 3 :nodes 10}
-   "constants.clj"     {:lines 12 :nodes 20}})
+   "constants.clj"     {:lines 12 :nodes 20}
+   "fn_doc.clj"        {:lines 5 :nodes 13}
+   "just_a_ns.cljs"    {:lines 2 :nodes 9}
+   "malformed.clj"     {:lines nil :nodes nil}
+   "tags.clj"          {:lines 18 :nodes 39}
+   "test1.clj"         {:lines 3 :nodes 12}})
 
 (defmacro def-all-file-tests! []
   `(do

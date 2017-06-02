@@ -1,5 +1,10 @@
 # Change Log
 
+## unreleased
+
+* BUGFIX: previous versions were over-counting constant nodes in the AST.
+* Added unit tests.
+
 ## 1.0.7
 
 * Better path deduplication.
