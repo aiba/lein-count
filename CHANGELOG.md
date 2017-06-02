@@ -1,6 +1,6 @@
 # Change Log
 
-## unreleased
+## 1.0.8
 
 * BUGFIX: previous versions were over-counting constant nodes in the AST.
 * Added unit tests.

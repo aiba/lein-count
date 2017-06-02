@@ -1,4 +1,4 @@
-(defproject lein-count "1.0.7"
+(defproject lein-count "1.0.8"
   :description "Counts lines (and nodes) of clojure code"
   :url "https://github.com/aiba/lein-count"
   :license {:name "Eclipse Public License" :url "http://www.eclipse.org/legal/epl-v10.html"}

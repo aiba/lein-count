@@ -29,11 +29,11 @@ Found 62 source files.
 |------+-------+---------------+--------|
 | Ext  | Files | Lines of Code |  Nodes |
 |------+-------+---------------+--------|
-| cljs |    26 |         16245 | 202780 |
-| cljc |    16 |          9535 | 171054 |
-| clj  |    20 |          3838 |  56018 |
-| ____ | _____ | _____________ | ______ |
-| SUM: |    62 |         29618 | 429852 |
+| cljs |    26 |         16247 |  84666 |
+| cljc |    16 |          9567 |  73249 |
+| clj  |    20 |          3843 |  19789 |
+| ____ | _____ | _____________ |  _____ |
+| SUM: |    62 |         29657 | 177704 |
 |------+-------+---------------+--------|
 ```
 
@@ -57,15 +57,16 @@ $ lein count :by-file
 Examining ("src")
 Found 3 source files.
 
-|------+--------------------------------------------------+---------------+-------|
-| Ext  | File                                             | Lines of Code | Nodes |
-|------+--------------------------------------------------+---------------+-------|
-| clj  | src/aiba/lein_count/constant_wrapping_reader.clj |           829 | 11403 |
-| clj  | src/aiba/lein_count/core.clj                     |           161 |  3012 |
-| clj  | src/leiningen/count.clj                          |            55 |  1155 |
-| ____ | ________________________________________________ | _____________ | _____ |
-|      | SUM:                                             |          1045 | 15570 |
-|------+--------------------------------------------------+---------------+-------|
+|------+----------------------------------------------------+---------------+-------|
+| Ext  | File                                               | Lines of Code | Nodes |
+|------+----------------------------------------------------+---------------+-------|
+| clj  | ./src/aiba/lein_count/constant_wrapping_reader.clj |           829 |  4203 |
+| clj  | ./src/aiba/lein_count/core.clj                     |           154 |   893 |
+| clj  | ./src/leiningen/count.clj                          |            67 |   355 |
+| clj  | ./src/aiba/lein_count/utils.clj                    |            30 |   172 |
+| ____ | __________________________________________________ | _____________ | _____ |
+|      | SUM:                                               |          1080 |  5623 |
+|------+----------------------------------------------------+---------------+-------|
 ```
 
 ### Artifacts
@@ -80,9 +81,9 @@ Found 26 source files.
 |------+-------+---------------+-------|
 | Ext  | Files | Lines of Code | Nodes |
 |------+-------+---------------+-------|
-| clj  |    26 |          1537 | 22263 |
+| clj  |    26 |          1537 |  6261 |
 | ____ | _____ | _____________ | _____ |
-| SUM: |    26 |          1537 | 22263 |
+| SUM: |    26 |          1537 |  6261 |
 |------+-------+---------------+-------|
 ```
 
@@ -98,11 +99,15 @@ This is a potentially interesting way to evaluate which libraries to depend on.
 
 ## Counting Nodes
 
-You might notice that there is another column called "nodes".  This is a potentially more accurate measure of the "length" of code.  Let's see if it's useful.
+You might notice that there is another column called "nodes". This is a potentially
+more accurate measure of the "length" of code. Let's see if it's useful.
 
 ## Implementation
 
-We use a modified version of [clojure.tools.reader][ctr] to parse the source files.  The modifications make the reader more lenient and also wrap constant values in metadata so they get counted.  Once a file is parsed, we simply count the unique lines upon which a clojure form starts or ends.
+We use a modified version of [clojure.tools.reader][ctr] to parse the source files.
+The modifications make the reader more lenient and also wrap constant values in
+metadata so they get counted. Once a file is parsed, we simply count the unique
+lines upon which a clojure form starts or ends.
 
 If you find an example where this seems off, please file an github issue.
 
@@ -110,7 +115,8 @@ The node count is just the total number of parsed forms.
 
 ## Known Issues
 
-None yet :-)
+Versions prior to 1.0.8 had a bug that overcounted constant nodes in the syntax tree
+by a lot.  See #8.
 
 ## License
 
