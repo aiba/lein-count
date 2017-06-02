@@ -21,12 +21,13 @@
   (let [data (atom [])]
     (walk/prewalk (fn [x]
                     (when (count-form? x)
-                      (returning x
-                        (swap! data conj (if (reader/constant? x)
-                                           {:form (:value x)
-                                            :meta (:loc-info x)}
-                                           {:form x
-                                            :meta (meta x)})))))
+                      (if (reader/constant? x)
+                        (do (swap! data conj {:form (:value x)
+                                              :meta (:loc-info x)})
+                            (:value x))
+                        (do (swap! data conj {:form x
+                                              :meta (meta x)})
+                            x))))
                   form)
     @data))
 
