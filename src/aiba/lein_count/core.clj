@@ -2,7 +2,7 @@
   (:require [aiba.lein-count.constant-wrapping-reader :as reader]
             [aiba.lein-count.utils
              :refer
-             [distinct-by-first map-vals relative-path-str returning]]
+             [distinct-by-first map-vals relative-path-str]]
             [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.tools.reader.reader-types :as rt]

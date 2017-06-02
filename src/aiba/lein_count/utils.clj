@@ -2,9 +2,6 @@
   (:require [clojure.string :as string])
   (:import java.io.File))
 
-(defmacro returning [x & body]
-  `(do ~@body ~x))
-
 (defn map-vals [f m]
   (reduce-kv (fn [r k v] (assoc r k (f v))) {} m))
 
