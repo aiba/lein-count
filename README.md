@@ -15,7 +15,7 @@ code to decide which lines count. This means `(comment ...)` forms and
 Merge into `~/.lein/profiles.clj`:
 
 ```clojure
-{:user {:plugins [[lein-count "1.0.8"]]}}
+{:user {:plugins [[lein-count "1.0.9"]]}}
 ```
 
 Now you can run `lein count` in a project.  Example:
