@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.9
+
+* Include fully custom branch version of tools-reader to avoid dependency conflicts (Fixes #1).
+
 ## 1.0.8
 
 * BUGFIX: previous versions were over-counting constant nodes in the AST.

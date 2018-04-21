@@ -1,11 +1,9 @@
 (ns aiba.lein-count.core
-  (:require [aiba.lein-count.constant-wrapping-reader :as reader]
-            [aiba.lein-count.utils
-             :refer
-             [distinct-by-first map-vals relative-path-str]]
+  (:require [aiba.lein-count.clojure-tools.reader :as reader]
+            [aiba.lein-count.utils :refer [distinct-by-first map-vals relative-path-str]]
             [clojure.java.io :as io]
             [clojure.string :as string]
-            [clojure.tools.reader.reader-types :as rt]
+            [aiba.lein-count.clojure-tools.reader.reader-types :as rt]
             [clojure.walk :as walk]
             [doric.core :as doric])
   (:import clojure.lang.ExceptionInfo

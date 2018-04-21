@@ -21,17 +21,17 @@
 
 (ns ^{:doc "A clojure reader in clojure"
       :author "Bronsa"}
-    aiba.lein-count.constant-wrapping-reader
+    aiba.lein-count.clojure-tools.reader
   (:refer-clojure :exclude [read read-line read-string char
                             default-data-readers *default-data-reader-fn*
                             *read-eval* *data-readers* *suppress-read*])
-  (:require [clojure.tools.reader.reader-types :refer
+  (:require [aiba.lein-count.clojure-tools.reader.reader-types :refer
              [read-char reader-error unread peek-char indexing-reader?
               get-line-number get-column-number get-file-name string-push-back-reader
               log-source]]
-            [clojure.tools.reader.impl.utils :refer :all] ;; [char ex-info? whitespace? numeric? desugar-meta]
-            [clojure.tools.reader.impl.commons :refer :all]
-            [clojure.tools.reader.default-data-readers :as data-readers])
+            [aiba.lein-count.clojure-tools.reader.impl.utils :refer :all] ;; [char ex-info? whitespace? numeric? desugar-meta]
+            [aiba.lein-count.clojure-tools.reader.impl.commons :refer :all]
+            [aiba.lein-count.clojure-tools.reader.default-data-readers :as data-readers])
   (:import (clojure.lang PersistentHashSet IMeta
                          RT Symbol Reflector Var IObj
                          PersistentVector IRecord Namespace)
@@ -891,7 +891,7 @@
    ***WARNING***
    This setting implies that the full power of the reader is in play,
    including syntax that can cause code to execute. It should never be
-   used with untrusted sources. See also: clojure.tools.reader.edn/read.
+   used with untrusted sources. See also: aiba.lein-count.tools-reader.edn/read.
 
    When set to logical false in the thread-local binding,
    the eval reader (#=) and *record/type literal syntax* are disabled in read/load.
@@ -986,10 +986,10 @@
    Note that read can execute code (controlled by *read-eval*),
    and as such should be used only with trusted sources.
 
-   To read data structures only, use clojure.tools.reader.edn/read
+   To read data structures only, use aiba.lein-count.tools-reader.edn/read
 
    Note that the function signature of clojure.tools.reader/read and
-   clojure.tools.reader.edn/read is not the same for eof-handling"
+   aiba.lein-count.tools-reader.edn/read is not the same for eof-handling"
   {:arglists '([] [reader] [opts reader] [reader eof-error? eof-value])}
   ([] (read *in* true nil))
   ([reader] (read reader true nil))
@@ -1004,10 +1004,10 @@
    Note that read-string can execute code (controlled by *read-eval*),
    and as such should be used only with trusted sources.
 
-   To read data structures only, use clojure.tools.reader.edn/read-string
+   To read data structures only, use aiba.lein-count.tools-reader.edn/read-string
 
    Note that the function signature of clojure.tools.reader/read-string and
-   clojure.tools.reader.edn/read-string is not the same for eof-handling"
+   aiba.lein-count.tools-reader.edn/read-string is not the same for eof-handling"
   ([s]
      (read-string {} s))
   ([opts s]
